@@ -1,0 +1,5 @@
+*.Rdata
+data/
+figures/
+workspace/
+.Rproj.user/
