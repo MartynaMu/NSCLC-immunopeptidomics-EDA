@@ -70,11 +70,6 @@ e_ht <- ComplexHeatmap::Heatmap(temp, show_row_names = FALSE, show_row_dend = FA
 # combined heatmap with material and patient annotation
 # ADD TUMOR SUBTYPE ANNOTATION
 library(ComplexHeatmap)
-names(ids_a_patient) <- rep("NAT",18)
-names(ids_b_patient) <- rep("Tumor",18)
-names(ids_c_patient) <- rep("PBMC",18)
-names(ids_d_patient) <- rep("LN",18)
-names(ids_e_patient) <- rep("Serum",18)
 temp <- Reduce(append,x = list(ids_a_patient,ids_b_patient,ids_c_patient,ids_d_patient,ids_e_patient))
 temp <- table(stack(temp))
 
@@ -103,3 +98,6 @@ abcd_ht <- ComplexHeatmap::Heatmap(temp,
 svg(file="figures/occ-ht.svg",width=8, height=6)
 draw(abcd_ht)
 dev.off()
+
+# frequency in all samples combined
+temp %>% 

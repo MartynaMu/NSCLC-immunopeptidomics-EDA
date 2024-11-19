@@ -33,13 +33,21 @@ ba_ln_L <- pivot_longer(ba_ln, 2:14,
                           values_to = "Binding category", 
                           names_to = "HLA supertype")
 
+ba_s <- read_xlsx("data/serum_all_peptides.xlsx", col_names = FALSE)
+ba_s <- cleanup_ranks(ba_s)
+ba_s[2:13] <- lapply(ba_s[2:13], as.numeric)
+ba_s <- binding_category(ba_s)
+ba_s_L <- pivot_longer(ba_s, 2:14,
+                        values_to = "Binding category", 
+                        names_to = "HLA supertype")
 
-ba <- bind_rows(ba_lung_L, ba_cancer_L, ba_pbmc_L, ba_ln_L, .id = "Material")
+ba <- bind_rows(ba_lung_L, ba_cancer_L, ba_pbmc_L, ba_ln_L, ba_s_L, .id = "Material")
 ba <- ba %>% mutate(Material = case_when(
   Material == "1" ~ "NAT",
   Material == "2" ~ "Tumor",
   Material == "3" ~ "PBMC", 
-  Material == "4" ~ "Lymph node"
+  Material == "4" ~ "LN",
+  Material == "5" ~ "Serum"
 ))
 
 filtr <- ba %>% pull(Peptide) %>% unique()
@@ -61,25 +69,37 @@ ba_p <- ba %>% filter(`HLA supertype` == "Any HLA allele") %>%
             lab.pos = "out",
             position = position_fill(.02),
             xlab = FALSE,
-            ylab = "Proportion")
+            ylab = "Proportion")+
+  theme_pubr(border = TRUE)+
+  theme(axis.text.x = element_text(vjust = -7),
+        plot.margin = margin(b=1,unit="cm"),
+        axis.title.x = element_blank())+
+  annotate("rect", xmin=x-.35,xmax=x+.35, ymin=-.2, ymax=-.1, 
+           fill = rep(c("#00A087FF","#3C5488FF","#4DBBD5FF","#E64B35FF","#F39B7FFF"),2), 
+           color = "black")+
+  coord_cartesian(ylim=c(0,1.02), clip = "off")
 ggsave("figures/binders-proportion.svg", device="svg", width=4, height=3, dpi=100, scale=1)
 
 lung_binders <- ba_lung %>% filter(`Any HLA allele` == 'Binder') %>% pull(Peptide)
 cancer_binders <- ba_cancer %>% filter(`Any HLA allele` == 'Binder') %>% pull(Peptide)
 pbmc_binders <- ba_pbmc %>% filter(`Any HLA allele` == 'Binder') %>% pull(Peptide)
 ln_binders <- ba_ln %>% filter(`Any HLA allele` == 'Binder') %>% pull(Peptide)
-
+s_binders <- ba_s %>% filter(`Any HLA allele` == 'Binder') %>% pull(Peptide)
 
 euler_binders <- euler(list(
-  "Lung" = lung_binders, 
-  "Cancer" = cancer_binders,
+  "NAT" = lung_binders, 
+  "Tumor" = cancer_binders,
   "PBMCs" = pbmc_binders,
-  "LN" = ln_binders))
+  "LN" = ln_binders,
+  "Serum" = s_binders))
 
-binder_overlap <- plot(euler_binders, quantities = TRUE, 
+binder_overlap <- plot(euler_binders, 
+                       quantities = TRUE, 
     # main = "Predicted HLA-I-binders overlap",
      labels=FALSE, 
-     legend = list(side="right"))
+     legend = list(side="right"),
+    fills = list(fill = c("#00A087FF","#3C5488FF","#4DBBD5FF","#E64B35FF","#F39B7FFF"), alpha = .7),
+    edges = FALSE)
 binder_overlap$vp$height <- unit(0.9, units = "npc")
 
 library(patchwork)

@@ -12,7 +12,7 @@ data = list.files(path = "data/filtered", full.names = TRUE)
 # 2. import multiple files stored in data vector
 files = lapply(data, read_xlsx)
 # 3. truncate the file names
-material <- c("Lymph node", "NAT", "PBMC", "Serum", "Tumor")
+material <- c("LN", "NAT", "PBMC", "Serum", "Tumor")
 # 4. combine (c) lists (mapply) each argument (df) of list of df and its file name
 all_lists <- mapply(c, files, material, SIMPLIFY = FALSE)
 # 5. bind rows of all dfs within the list
@@ -24,11 +24,12 @@ names(all)[9] <- "Material"
 ids_a <- all %>% filter(Material == "NAT") %>% pull(Peptide) %>% unique()
 ids_b <- all %>% filter(Material == "Tumor") %>% pull(Peptide) %>% unique()
 ids_c <- all %>% filter(Material == "PBMC") %>% pull(Peptide) %>% unique()
-ids_d <- all %>% filter(Material == "Lymph node") %>% pull(Peptide) %>% unique()
+ids_d <- all %>% filter(Material == "LN") %>% pull(Peptide) %>% unique()
 ids_e <- all %>% filter(Material == "Serum") %>% pull(Peptide) %>% unique()
 
 library(eulerr)
-all_overlap <- euler(list("Lung" = ids_a,
+all_overlap <- euler(list(
+          "NAT" = ids_a,
            "Tumor" = ids_b,
            "PBMC" = ids_c,
            "LN" = ids_d,
@@ -36,7 +37,9 @@ all_overlap <- euler(list("Lung" = ids_a,
   plot(quantities = TRUE, 
     #   main = "All identified peptides overlap", 
        labels=FALSE, 
-       legend = NULL)
+       legend = NULL,
+    fills = list(fill = c("#00A087FF","#3C5488FF","#4DBBD5FF","#E64B35FF","#F39B7FFF"), alpha = .7),
+    edges = FALSE)
 
 ids <- all %>% group_by(Material, Sample) %>% summarise(Count = n())
 
@@ -72,7 +75,10 @@ ids_p <- ggboxplot(ids,
           color = "Material", 
           palette = "npg",
           add = "jitter",
-          order = c("Lymph node", "PBMC", "NAT", "Tumor", "Serum"),
+          order = c("LN", "PBMC", "NAT", "Tumor", "Serum"),
           legend = "none",
           xlab = FALSE,
-          ylab = "All identified peptide count")
+          ylab = "All identified peptide count")+
+  theme_pubr(border = TRUE)+
+  theme(axis.title.x = element_blank(),
+        legend.position = "none")
